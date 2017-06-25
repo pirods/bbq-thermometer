@@ -25,6 +25,6 @@ class Datum(models.Model):
     )
     session = models.ForeignKey(Session)
     probe = models.CharField(max_length=8, default=None)  # GPIO that drives the probe
-    type = models.CharField(choices=DATUM_CHOICES)
+    type = models.CharField(choices=DATUM_CHOICES, max_length=2)
     value = models.FloatField()  # Value received
     timestamp = models.DateTimeField(auto_created=True)

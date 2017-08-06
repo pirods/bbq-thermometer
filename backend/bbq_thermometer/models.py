@@ -11,11 +11,14 @@ class Session(models.Model):
     """
     start_date = models.DateField(auto_created=True)
 
+    def __str__(self):
+        return unicode(self.id)
+
 
 class Datum(models.Model):
     """
     Single datum. It can contain several readings (of different values as well). Each datum must contain the reference
-    to the session it belongs to.
+    to the session it belongs to. Please remember that temperatures are always in °C, resistances in Ohms.
     """
     DATUM_CHOICES = (
         ('TI', 'Internal Temperature'),
@@ -27,3 +30,9 @@ class Datum(models.Model):
     type = models.CharField(choices=DATUM_CHOICES, max_length=2)
     value = models.FloatField()  # Value received
     timestamp = models.DateTimeField(auto_created=True)
+
+    class Meta:
+        verbose_name_plural = "data"
+
+    def __str__(self):
+        return unicode(self.id)

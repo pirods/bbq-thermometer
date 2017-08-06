@@ -4,11 +4,16 @@ from __future__ import unicode_literals
 from bbq_thermometer.models import Session, Datum
 from bbq_thermometer.serializers import DatumSerializer, SessionSerializer
 from rest_framework import viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import render
 
 
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
+
     #
     # def create(self, request, *args, **kwargs):
     #     # Overriding the create method
@@ -24,6 +29,9 @@ class SessionViewSet(viewsets.ModelViewSet):
 class DatumViewSet(viewsets.ModelViewSet):
     queryset = Datum.objects.all()
     serializer_class = DatumSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('session',)
+
 
     # def create(self, request, *args, **kwargs):
     #     try:
@@ -38,3 +46,39 @@ class DatumViewSet(viewsets.ModelViewSet):
     #     except Exception as e:
     #         print e, type(e)
     #         return response.Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChartData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        # FIXME - IMPLEMENT INTERNAL AND EXTERNAL TEMPERATURE FILTERS
+        request_params = request.query_params
+        session = request_params.get('session', None)
+        if session is None or session == '':
+            session = Session.objects.all().order_by('-start_date')[0].id
+        response = {'data': {'datasets': []}}
+        data = Datum.objects.filter(session__id=session).order_by('timestamp')
+
+        probes = set(data.values_list('probe', flat=True))
+
+        for idx, probe in enumerate(list(probes)):
+            response['data']['datasets'].append({'data': [], 'label': "Probe {}".format(probe)})
+            temp_data = []
+            for datum in data.filter(probe=probe):
+                temp_data.append(
+                    {"x": int(datum.timestamp.strftime("%s")) * 1000,
+                     "y": datum.value}
+                )
+
+            response['data']['datasets'][idx]['data'] = temp_data
+        return Response(response)
+
+
+class ChartView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, format=None):
+        return render(request, "chart.html", {})

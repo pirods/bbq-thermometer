@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+<script>
+    {% block jquery %}
+
+    var dataEndpoint = {% url "get_chart_data" %}
+    var sessionsEndpoint = {% url "session-list" %}
+    var selectedSession = null;
+
+    // Retrieving the sessions list
+    $.ajax({
+        method: "GET",
+        url: sessionsEndpoint,
+        success: function(sessions){
+            console.log("success - sessions");
+            console.log(sessions);
+            for (let i=0; i<sessions.length; i++) {
+                let sessionStartDate = sessions[i].start_date;
+                let sessionChild = $('<li><a href="#">' + sessionStartDate + '</a></li>');
+                $('#sessions-dropdown').append(sessionChild);
+                sessionChild.click(function () {
+                    selectedSession = sessions[i].id;
+                    loadChart(selectedSession);
+                })
+            }
+            loadChart(null);
+        },
+        error: function(error_data){
+            console.log("Error retrieving the BBQ Sessions List");
+            console.log(error_data);
+        }
+    });
+
+    // Retrieving the data to be plotted
+    function loadChart(selectedSession) {
+        $.ajax({
+            method: "GET",
+            url: dataEndpoint,
+            data: {"session": selectedSession},
+            success: function(data){
+                console.log("success");
+                console.log(data);
+                setChart(data);
+            },
+            error: function(error_data){
+                console.log("Error retrieving the BBQ Data");
+                console.log(error_data);
+            }
+        });
+    }
+
+    function setChart(data) {
+        var ctx = document.getElementById("bbqChart").getContext('2d');
+        var bbqChart = new Chart.Scatter(ctx, {
+            data: data.data,
+            options: {
+                title: {
+                    display: true,
+                    text: 'Chart.js Scatter Chart'
+                },
+                scales: {
+                    xAxes: [{
+                        position: 'bottom',
+                        ticks: {
+                            userCallback: function(label, index, labels) {
+                                return moment(label).format("DD/MM/YY HH:mm:ss");
+                            }
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'x axis'
+                        }
+                    }],
+                    yAxes: [{
+                        position: 'left',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'y axis'
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+    }
+    {% endblock %}
+</script>
+
+{% block content %}
+
+<div class='row'>
+    <div class='col-sm-12'>
+        <h1>BBQ Thermometer Chart!</h1>
+        <!--Adding dropdown menu-->
+        <div class="dropdown">
+          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="sessions-button">BBQ Sessions List
+          <span class="caret"></span></button>
+          <ul class="dropdown-menu" id="sessions-dropdown"></ul>
+        </div>
+        <canvas id="bbqChart" width="400" height="400"></canvas>
+    </div>
+</div>
+
+{% endblock content %}

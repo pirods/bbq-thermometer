@@ -56,23 +56,27 @@ class ChartData(APIView):
         # FIXME - IMPLEMENT INTERNAL AND EXTERNAL TEMPERATURE FILTERS
         request_params = request.query_params
         session = request_params.get('session', None)
-        if session is None or session == '':
-            session = Session.objects.all().order_by('-start_date')[0].id
+        sessions = Session.objects.all()
         response = {'data': {'datasets': []}}
-        data = Datum.objects.filter(session__id=session).order_by('timestamp')
 
-        probes = set(data.values_list('probe', flat=True))
+        if sessions:
+            if session is None or session == '':
+                session = Session.objects.all().order_by('-start_date')[0].id
+            data = Datum.objects.filter(session__id=session).order_by('timestamp')
 
-        for idx, probe in enumerate(list(probes)):
-            response['data']['datasets'].append({'data': [], 'label': "Probe {}".format(probe)})
-            temp_data = []
-            for datum in data.filter(probe=probe):
-                temp_data.append(
-                    {"x": int(datum.timestamp.strftime("%s")) * 1000,
-                     "y": datum.value}
-                )
+            probes = set(data.values_list('probe', flat=True))
 
-            response['data']['datasets'][idx]['data'] = temp_data
+            for idx, probe in enumerate(list(probes)):
+                response['data']['datasets'].append({'data': [], 'label': "Probe {}".format(probe)})
+                temp_data = []
+                for datum in data.filter(probe=probe):
+                    temp_data.append(
+                        {"x": int(datum.timestamp.strftime("%s")) * 1000,
+                         "y": datum.value}
+                    )
+
+                response['data']['datasets'][idx]['data'] = temp_data
+
         return Response(response)
 
 

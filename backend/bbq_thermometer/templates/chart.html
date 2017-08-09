@@ -3,8 +3,8 @@
 <script>
     {% block jquery %}
 
-    var dataEndpoint = {% url "get_chart_data" %}
-    var sessionsEndpoint = {% url "session-list" %}
+    var dataEndpoint = {% url "get_chart_data" %};
+    var sessionsEndpoint = {% url "session-list" %};
     var selectedSession = null;
 
     // Retrieving the sessions list
@@ -54,16 +54,21 @@
         var bbqChart = new Chart.Scatter(ctx, {
             data: data.data,
             options: {
-                title: {
-                    display: true,
-                    text: 'Chart.js Scatter Chart'
+                legend: {
+                    labels: {
+                        fontSize: 16
+                    }
                 },
+                responsive: false,
+                maintainAspectRatio: true,
                 scales: {
                     xAxes: [{
                         position: 'bottom',
                         ticks: {
+                            fontSize: 14,
                             userCallback: function(label, index, labels) {
                                 return moment(label).format("DD/MM/YY HH:mm:ss");
+
                             }
                         },
                         scaleLabel: {
@@ -78,6 +83,7 @@
                             labelString: 'y axis'
                         },
                         ticks: {
+                            fontSize: 18,
                             beginAtZero: true
                         }
                     }]
@@ -90,17 +96,25 @@
 
 {% block content %}
 
-<div class='row'>
-    <div class='col-sm-12'>
-        <h1>BBQ Thermometer Chart!</h1>
-        <!--Adding dropdown menu-->
-        <div class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="sessions-button">BBQ Sessions List
-          <span class="caret"></span></button>
-          <ul class="dropdown-menu" id="sessions-dropdown"></ul>
+    <div class="mainWindow">
+        <div class="windowHeader text-center">
+            <h1>BBQ Thermometer Chart!</h1>
+            <p>Some cool comment!</p>
+            <div class="col-sm-12">
+                <div class="col-sm-4">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="sessions-button">BBQ Sessions List
+                            <span class="caret"></span></button>
+                        <ul class="dropdown-menu" id="sessions-dropdown"></ul>
+                    </div>
+                </div>
+                <div class="col-sm-4">Text1!</div>
+                <div class="col-sm-4">Text2!</div>
+            </div>
         </div>
-        <canvas id="bbqChart" width="400" height="400"></canvas>
+        <div class="windowBody">
+            <canvas id="bbqChart" height="800px" width="1000 px"></canvas>
+        </div>
     </div>
-</div>
 
 {% endblock content %}

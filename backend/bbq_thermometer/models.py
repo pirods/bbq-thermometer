@@ -21,12 +21,12 @@ class Datum(models.Model):
     to the session it belongs to. Please remember that temperatures are always in °C, resistances in Ohms.
     """
     DATUM_CHOICES = (
-        ('TI', 'Internal Temperature'),
-        ('TE', 'External Temperature'),
-        ('R', 'Resistance')
+        ('TI', 'Internal Temperature (°C)'),
+        ('TE', 'External Temperature (°C)'),
+        ('R', 'Resistance (Ω)')
     )
     session = models.ForeignKey(Session)
-    probe = models.CharField(max_length=8, default=None)  # GPIO that drives the probe
+    probe = models.CharField(max_length=8, default=None)  # Numeric sequence of the probe
     type = models.CharField(choices=DATUM_CHOICES, max_length=2)
     value = models.FloatField()  # Value received
     timestamp = models.DateTimeField(auto_created=True)

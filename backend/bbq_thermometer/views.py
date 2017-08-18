@@ -10,6 +10,9 @@ from rest_framework.response import Response
 from django.shortcuts import render
 
 
+COLOURS = ["#3e95cd", "#3cba9f", "#8e5ea2", "#e8c3b9", "#c45850"]  # I might improve this FIXME
+
+
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
@@ -30,7 +33,7 @@ class DatumViewSet(viewsets.ModelViewSet):
     queryset = Datum.objects.all()
     serializer_class = DatumSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('session',)
+    filter_fields = ('session', 'type')
 
 
     # def create(self, request, *args, **kwargs):
@@ -56,18 +59,68 @@ class ChartData(APIView):
         # FIXME - IMPLEMENT INTERNAL AND EXTERNAL TEMPERATURE FILTERS
         request_params = request.query_params
         session = request_params.get('session', None)
+        datum_type = request_params.get('type', None)
         sessions = Session.objects.all()
         response = {'data': {'datasets': []}}
+
+        # Allowing to filter by Data Type
+        if datum_type is None or datum_type == '':
+            datum_type = Datum.DATUM_CHOICES[0]
+        else:
+            datum_type = Datum.DATUM_CHOICES[int(datum_type)]
+
+        chart_options = {
+            "legend": {
+                "labels": {
+                    "fontSize": 20
+                }
+            },
+            "responsive": False,
+            "maintainAspectRatio": True,
+            "scales": {
+                "xAxes": [
+                    {
+                        "position": 'bottom',
+                        "ticks": {
+                            "fontSize": 14,
+                        }
+                    }
+                ],
+                "yAxes": [
+                    {
+                        "position": 'left',
+                        "scaleLabel": {
+                            "display": True,
+                            "labelString": datum_type[1],
+                            "fontSize": 18
+                        },
+                        "ticks": {
+                            "fontSize": 18,
+                            "beginAtZero": True
+                        }
+                    }]
+                }
+            }
+
+        response["options"] = chart_options
 
         if sessions:
             if session is None or session == '':
                 session = Session.objects.all().order_by('-start_date')[0].id
-            data = Datum.objects.filter(session__id=session).order_by('timestamp')
+            data = Datum.objects.filter(session__id=session, type=datum_type[0]).order_by('timestamp')
 
             probes = set(data.values_list('probe', flat=True))
 
             for idx, probe in enumerate(list(probes)):
-                response['data']['datasets'].append({'data': [], 'label': "Probe {}".format(probe)})
+                response['data']['datasets'].append(
+                    {
+                        'data': [],
+                        'label': "Probe {}".format(probe),
+                        "borderColor": COLOURS[idx],
+                        "backgroundColor": COLOURS[idx],
+                        "fill": False
+                    }
+                )
                 temp_data = []
                 for datum in data.filter(probe=probe):
                     temp_data.append(

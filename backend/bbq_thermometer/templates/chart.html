@@ -2,95 +2,86 @@
 
 <script>
     {% block jquery %}
+        var dataEndpoint = {% url "get_chart_data" %};
+        var rawDataEndpoint = {% url "datum-list" %};
+        var sessionsEndpoint = {% url "session-list" %};
+        var selectedSession = null;
+        var selectedDataType = null;
 
-    var dataEndpoint = {% url "get_chart_data" %};
-    var rawDataEndpoint = {% url "datum-list" %};
-    var sessionsEndpoint = {% url "session-list" %};
-    var selectedSession = null;
-    var selectedDataType = null;
-
-    // Retrieving possible data types
-    $.ajax({
-        method: "OPTIONS",
-        url: rawDataEndpoint,
-        success: function(rawOptions){
-            console.log("success - rawData OPTIONS");
-            console.log(rawOptions);
-            let options = rawOptions["actions"]["POST"]["type"]["choices"];
-            for (let j=0; j<options.length; j++) {
-                let displayOptionType = options[j].display_name;
-                let typeChild = $('<li><a href="#">' + displayOptionType + '</a></li>');
-                $('#types-dropdown').append(typeChild);
-                typeChild.click(function () {
-                    selectedDataType = j;
-                    loadChart(selectedSession, selectedDataType);
-                })
-            }
-
-        },
-        error: function(error_data){
-            console.log("Error retrieving the rawData OPTIONS");
-            console.log(error_data);
-        }
-    });
-
-    // Retrieving the sessions list
-    $.ajax({
-        method: "GET",
-        url: sessionsEndpoint,
-        success: function(sessions){
-            console.log("success - sessions");
-            console.log(sessions);
-            for (let i=0; i<sessions.length; i++) {
-                let sessionStartDate = sessions[i].start_date;
-                let sessionChild = $('<li><a href="#">' + sessionStartDate + '</a></li>');
-                $('#sessions-dropdown').append(sessionChild);
-                sessionChild.click(function () {
-                    selectedSession = sessions[i].id;
-                    loadChart(selectedSession, selectedDataType);
-                })
-            }
-            loadChart(selectedSession, selectedDataType);
-        },
-        error: function(error_data){
-            console.log("Error retrieving the BBQ Sessions List");
-            console.log(error_data);
-        }
-    });
-
-    // Retrieving the data to be plotted
-    function loadChart(selectedSession, selectedDataType) {
+        // Retrieving possible data types
         $.ajax({
-            method: "GET",
-            url: dataEndpoint,
-            data: {
-                "session": selectedSession,
-                "type": selectedDataType
+            method: "OPTIONS",
+            url: rawDataEndpoint,
+            success: function (rawOptions) {
+                console.log("success - rawData OPTIONS");
+                console.log(rawOptions);
+                let options = rawOptions["actions"]["POST"]["type"]["choices"];
+                for (let j = 0; j < options.length; j++) {
+                    let displayOptionType = options[j].display_name;
+                    let typeChild = $('<li><a href="#">' + displayOptionType + '</a></li>');
+                    $('#types-dropdown').append(typeChild);
+                    typeChild.click(function () {
+                        selectedDataType = j;
+                        loadChart(selectedSession, selectedDataType);
+                    })
+                }
+
             },
-            success: function(data){
-                console.log("success");
-                console.log(data);
-                setChart(data);
-            },
-            error: function(error_data){
-                console.log("Error retrieving the BBQ Data");
+            error: function (error_data) {
+                console.log("Error retrieving the rawData OPTIONS");
                 console.log(error_data);
             }
         });
-    }
 
-    function setChart(data) {
-        var ctx = document.getElementById("bbqChart").getContext('2d');
-        // Needed to display dates
-        data.options.scales.xAxes[0].ticks.userCallback = function (label, index, labels) {
-            return moment(label).format("DD/MM/YY HH:mm:ss");
-            };
-
-        var bbqChart = new Chart.Scatter(ctx, {
-            data: data.data,
-            options: data.options
+        // Retrieving the sessions list
+        $.ajax({
+            method: "GET",
+            url: sessionsEndpoint,
+            success: function (sessions) {
+                console.log("success - sessions");
+                console.log(sessions);
+                for (let i = 0; i < sessions.length; i++) {
+                    let sessionStartDate = sessions[i].start_date;
+                    let sessionChild = $('<li><a href="#">' + sessionStartDate + '</a></li>');
+                    $('#sessions-dropdown').append(sessionChild);
+                    sessionChild.click(function () {
+                        selectedSession = sessions[i].id;
+                        loadChart(selectedSession, selectedDataType);
+                    })
+                }
+                loadChart(selectedSession, selectedDataType);
+            },
+            error: function (error_data) {
+                console.log("Error retrieving the BBQ Sessions List");
+                console.log(error_data);
+            }
         });
-    }
+
+        // Retrieving the data to be plotted
+        function loadChart(selectedSession, selectedDataType) {
+            $.ajax({
+                method: "GET",
+                url: dataEndpoint,
+                data: {
+                    "session": selectedSession,
+                    "type": selectedDataType
+                },
+                success: function (data) {
+                    console.log("success");
+                    console.log(data);
+                    setChart(data);
+                },
+                error: function (error_data) {
+                    console.log("Error retrieving the BBQ Data");
+                    console.log(error_data);
+                }
+            });
+        }
+
+        function setChart(data) {
+            Highcharts.chart('windowBody', data);
+        }
+
     {% endblock %}
 </script>
 
@@ -99,27 +90,28 @@
     <div class="mainWindow">
         <div class="windowHeader text-center">
             <h1>BBQ Thermometer Chart!</h1>
-            <p>Main chart for my BBQ sessions! Wish me good luck and buon appetito! Select the cooking session and the data you would like to visualize from the dropdown buttons.</p>
+            <p>Main chart for my BBQ sessions! Wish me good luck and buon appetito! Select the cooking session and the
+                data you would like to visualize from the dropdown buttons.</p>
             <div class="col-sm-12">
                 <div class="col-sm-6">
                     <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="sessions-button">BBQ Sessions List
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                                id="sessions-button">BBQ Sessions List
                             <span class="caret"></span></button>
                         <ul class="dropdown-menu" id="sessions-dropdown"></ul>
                     </div>
                 </div>
                 <div class="col-sm-6">
                     <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="type-button">Data Type List
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+                                id="type-button">Data Type List
                             <span class="caret"></span></button>
                         <ul class="dropdown-menu" id="types-dropdown"></ul>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="windowBody">
-            <canvas id="bbqChart" height="800px" width="1000 px"></canvas>
-        </div>
+        <div class="windowBody" id="windowBody"></div>
     </div>
 
 {% endblock content %}

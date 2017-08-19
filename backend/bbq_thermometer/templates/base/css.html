@@ -5,6 +5,9 @@
 <!-- Latest compiled and minified Bootstrap optional theme CSS -->
 <link rel="stylesheet" href="{% static 'css/bootstrap-theme.css' %}">
 
+<!-- Latest Highcharts CSS -->
+<link rel="stylesheet" href="{% static 'css/highcharts.css' %}">
+
 <style>
     .mainWindow{
         padding: 2em;
@@ -12,16 +15,13 @@
 
     .windowBody{
         margin: 0 auto;
-        display: table;
+        height: 80vh;
+        min-width: 50vw;
+        max-width: 90vw;
     }
 
     .dropdown{
         margin: 0 auto;
         display: table;
     }
-
-    #bbqChart{
-        margin-top: 2em;
-    }
-
 </style>

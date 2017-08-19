@@ -10,9 +10,6 @@ from rest_framework.response import Response
 from django.shortcuts import render
 
 
-COLOURS = ["#3e95cd", "#3cba9f", "#8e5ea2", "#e8c3b9", "#c45850"]  # I might improve this FIXME
-
-
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
@@ -61,7 +58,6 @@ class ChartData(APIView):
         session = request_params.get('session', None)
         datum_type = request_params.get('type', None)
         sessions = Session.objects.all()
-        response = {'data': {'datasets': []}}
 
         # Allowing to filter by Data Type
         if datum_type is None or datum_type == '':
@@ -69,56 +65,81 @@ class ChartData(APIView):
         else:
             datum_type = Datum.DATUM_CHOICES[int(datum_type)]
 
-        chart_options = {
-            "legend": {
-                "labels": {
-                    "fontSize": 20
+        response = {
+            "chart": {
+                "zoomType": 'x',
+            },
+            "title": {
+                "text": ''
+            },
+            "xAxis": {
+                "type": 'datetime'
+            },
+            "yAxis": {
+                "title": {
+                    "text": 'Exchange rate'
                 }
             },
-            "responsive": False,
-            "maintainAspectRatio": True,
-            "scales": {
-                "xAxes": [
-                    {
-                        "position": 'bottom',
-                        "ticks": {
-                            "fontSize": 14,
+            "legend": {
+                "enabled": True
+            },
+            "series": [],
+            "responsive": {
+                "rules": [{
+                    "condition": {
+                        "maxWidth": None
+                    },
+                    "chartOptions": {
+                        "legend": {
+                            "itemStyle": {
+                                "fontSize": 16
+                            },
+                            "align": 'center',
+                            "verticalAlign": 'bottom',
+                            "layout": 'horizontal'
+                        },
+                        "yAxis": {
+                            "labels": {
+                                "align": 'left',
+                                "x": -5,
+                                "y": -5
+                            },
+                            "title": {
+                                "style": {
+                                    "fontSize": 18
+                                },
+                                "text": datum_type[1],
+                                "x": -5
+                            }
+                        },
+                        "subtitle": {
+                            "text": None
+                        },
+                        "credits": {
+                            "enabled": False
                         }
                     }
-                ],
-                "yAxes": [
-                    {
-                        "position": 'left',
-                        "scaleLabel": {
-                            "display": True,
-                            "labelString": datum_type[1],
-                            "fontSize": 18
-                        },
-                        "ticks": {
-                            "fontSize": 18,
-                            "beginAtZero": True
-                        }
-                    }]
-                }
+                }]
             }
-
-        response["options"] = chart_options
+        }
 
         if sessions:
             if session is None or session == '':
-                session = Session.objects.all().order_by('-start_date')[0].id
-            data = Datum.objects.filter(session__id=session, type=datum_type[0]).order_by('timestamp')
+                session = Session.objects.all().order_by('-start_date')[0]
+            else:
+                session = Session.objects.get(id=session)
+
+            response["title"]["text"] = "Session #{}: {}".format(session.id, session.start_date)
+            data = Datum.objects.filter(session=session, type=datum_type[0]).order_by('timestamp')
 
             probes = set(data.values_list('probe', flat=True))
 
             for idx, probe in enumerate(list(probes)):
-                response['data']['datasets'].append(
+                response['series'].append(
                     {
+                        'type': 'line',
                         'data': [],
-                        'label': "Probe {}".format(probe),
-                        "borderColor": COLOURS[idx],
-                        "backgroundColor": COLOURS[idx],
-                        "fill": False
+                        'name': "Probe {}".format(probe),
                     }
                 )
                 temp_data = []
@@ -128,7 +149,7 @@ class ChartData(APIView):
                          "y": datum.value}
                     )
 
-                response['data']['datasets'][idx]['data'] = temp_data
+                response['series'][idx]['data'] = temp_data
 
         return Response(response)
 

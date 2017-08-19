@@ -55,5 +55,12 @@ def generate_random_data(delete_previous=False, sessions_amount=5, data_amount=1
 
                     )
 
+
+def convert_celsius_to_fahrenheit(temperature_celsius):
+    """
+    Simple Celsius to Fahrenheit converter
+    """
+    return 9.0/5.0 * temperature_celsius + 32
+
 # Uncomment and run to generate some data
 # generate_random_data(delete_previous=True)

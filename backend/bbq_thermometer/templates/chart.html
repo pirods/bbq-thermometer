@@ -7,6 +7,12 @@
         var sessionsEndpoint = {% url "session-list" %};
         var selectedSession = null;
         var selectedDataType = null;
+        var isCelsius = true;
+
+        $('#measurementUnit').change(function () {
+            isCelsius = $(this).prop('checked');
+            loadChart(selectedSession, selectedDataType, isCelsius);
+        });
 
         // Retrieving possible data types
         $.ajax({
@@ -21,11 +27,19 @@
                     let typeChild = $('<li><a href="#">' + displayOptionType + '</a></li>');
                     $('#types-dropdown').append(typeChild);
                     typeChild.click(function () {
-                        selectedDataType = j;
-                        loadChart(selectedSession, selectedDataType);
-                    })
+                        selectedDataType = options[j].value;
+                        // Disabling the toggle button if the type selected is not a temperature
+                        // A bit spartan, I know, but for the moment it was the only way - FIXME
+                        if (options[j].display_name.toLowerCase().indexOf('temperature') === -1) {
+                            $('#measurementUnit').prop('disabled', true);
+                            isCelsius = true;
+                        }
+                        else {
+                            $('#measurementUnit').prop('disabled', false);
+                        }
+                        loadChart(selectedSession, selectedDataType, isCelsius);
+                    });
                 }
-
             },
             error: function (error_data) {
                 console.log("Error retrieving the rawData OPTIONS");
@@ -46,10 +60,10 @@
                     $('#sessions-dropdown').append(sessionChild);
                     sessionChild.click(function () {
                         selectedSession = sessions[i].id;
-                        loadChart(selectedSession, selectedDataType);
+                        loadChart(selectedSession, selectedDataType, isCelsius);
                     })
                 }
-                loadChart(selectedSession, selectedDataType);
+                loadChart(selectedSession, selectedDataType, isCelsius);
             },
             error: function (error_data) {
                 console.log("Error retrieving the BBQ Sessions List");
@@ -58,13 +72,14 @@
         });
 
         // Retrieving the data to be plotted
-        function loadChart(selectedSession, selectedDataType) {
+        function loadChart(selectedSession, selectedDataType, isCelsius) {
             $.ajax({
                 method: "GET",
                 url: dataEndpoint,
                 data: {
                     "session": selectedSession,
-                    "type": selectedDataType
+                    "type": selectedDataType,
+                    "isCelsius": isCelsius
                 },
                 success: function (data) {
                     console.log("success");
@@ -93,7 +108,7 @@
             <p>Main chart for my BBQ sessions! Wish me good luck and buon appetito! Select the cooking session and the
                 data you would like to visualize from the dropdown buttons.</p>
             <div class="col-sm-12">
-                <div class="col-sm-6">
+                <div class="col-sm-4">
                     <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
                                 id="sessions-button">BBQ Sessions List
@@ -101,7 +116,7 @@
                         <ul class="dropdown-menu" id="sessions-dropdown"></ul>
                     </div>
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-4">
                     <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
                                 id="type-button">Data Type List
@@ -109,9 +124,13 @@
                         <ul class="dropdown-menu" id="types-dropdown"></ul>
                     </div>
                 </div>
+                <div class="col-sm-4">
+                    <input id=measurementUnit type="checkbox" checked data-toggle="toggle" data-on="°C" data-off="F">
+                </div>
             </div>
         </div>
         <div class="windowBody" id="windowBody"></div>
     </div>
+
 
 {% endblock content %}

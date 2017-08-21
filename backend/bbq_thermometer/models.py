@@ -9,10 +9,10 @@ class Session(models.Model):
     readings for a while. Some sort of temporal parameter will be used to discriminate between readings that belong
     to a session and readings that belong to a new one.
     """
-    start_date = models.DateField(auto_created=True)
+    start_date = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return unicode(self.id)
+        return u"{}: {}".format(self.id, self.start_date)
 
 
 class Datum(models.Model):
@@ -29,7 +29,7 @@ class Datum(models.Model):
     probe = models.CharField(max_length=8, default=None)  # Numeric sequence of the probe
     type = models.CharField(choices=DATUM_CHOICES, max_length=2)
     value = models.FloatField()  # Value received
-    timestamp = models.DateTimeField(auto_created=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "data"

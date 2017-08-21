@@ -3,11 +3,11 @@
 """
 Utilities module that contains useful functions to somewhat test, initialise and work with the backend.
 """
+from django.utils import timezone
 import datetime
 import django
 import math
 import os
-import pytz
 import random
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
@@ -25,10 +25,10 @@ def generate_random_data(delete_previous=False, sessions_amount=5, data_amount=1
 
 
     for i in range(sessions_amount):
-        start_date = datetime.date.today() - datetime.timedelta(days=i)
-        session = Session.objects.create(
-            start_date=start_date
-        )
+        start_date = datetime.date.today() - datetime.timedelta(days=(sessions_amount - (i + 1)))
+        session = Session.objects.create()
+        session.start_date = start_date
+        session.save()
         timestamp = datetime.datetime.combine(start_date, datetime.datetime.min.time()) + datetime.timedelta(
             hours=random.randint(10, 20)
         )
@@ -46,14 +46,14 @@ def generate_random_data(delete_previous=False, sessions_amount=5, data_amount=1
                         -int(math.ceil(abs(starting_value * 0.1)) + 0.1),
                         int(math.ceil(abs(starting_value * 0.1)) + 0.1)
                     )
-                    Datum.objects.create(
+                    datum = Datum.objects.create(
                         session=session,
                         probe=j,
                         type=datum_type_id,
-                        value=last_value,
-                        timestamp=(timestamp + datetime.timedelta(minutes=z)).replace(tzinfo=pytz.UTC)
-
+                        value=last_value
                     )
+                    datum.timestamp = (timestamp + datetime.timedelta(minutes=z)).replace(tzinfo=timezone.get_current_timezone())
+                    datum.save()
 
 
 def convert_celsius_to_fahrenheit(temperature_celsius):

@@ -9,6 +9,12 @@
         var selectedDataType = null;
         var isCelsius = true;
 
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
         $('#measurementUnit').change(function () {
             isCelsius = $(this).prop('checked');
             loadChart(selectedSession, selectedDataType, isCelsius);
